@@ -1,0 +1,57 @@
+17-6-2017
+In preparazione all'aggiunta di vari generi ho fatto qualche prova con funzioni d'attivazione differenti.
+Partire a default con l'identità (anzi che una sigmoide) ha prodotto un drastico calo della fitness media della popolazione.
+
+Il fatto che la sigmoide schiacci tutto nell'intervallo di valori significativi aiutava sensibilmente il processo.
+Di fatto, l'individuo migliore dopo 350 generazioni, aveva capito che l'attivazione migliore fosse la sigmoide.
+Purtroppo però non ha avuto abbastanza tempo per raffinarsi e quindi ha ottenuto più errori di altri individui allenati su sole sigmoidi.
+
+L'aggiunta di un altro genere non so come possa configurarsi.
+I casi sono vari:
+	A) continuare con la codifica lineare e stabilire che se 0=classica, 1=jazz allora 0.5=rock, ma questo alla lunga può portare a informazioni troppo ravvicinate e confini troppo labili
+		(potrebbe anche richiedere criteri di valutazione diversi dal semplice errore medio) e quindi a processi evolutivi che richiedono troppe generazioni per raffinarsi.
+
+	B) adottare una codifica bidimensionale, ovvero, immaginare i generi come punti distinti di un piano (un vettore, essenzialmente) 
+		così che si possa valutare la "somiglianza" a un qualunque genere misurando la distanza tra i vettori
+	 	Problema: la codifica dei punti di riferimento (i.e. della base) è di estrema importanza e rischia di essere arbitraria.
+		TODO: cercare online articoli che abbiano intrapreso questa strada
+
+	B2) la soluzione migliore potrebbe non rivelarsi semplicemente binaria, bensì potrebbe risultare uno spazio N-dimensionale.
+		Actually, mi sta venendo in mente di rappresentare i dati in {0,1}^N, dove ogni asse rappresenta un genere.
+		I punti fissi sarebbero quindi meno arbitrari (sarebbero i versori unitari degli assi) e ogni brano avrebbe una collocazione in questo spazio.
+
+Probabilmente continuerò su tutte e due le strade, parallelamente, e confronterò i risultati.
+Mi serviranno: #TODO:
+		1) un nuovo file di configurazione
+		2) una nuova mappa di codifica per i generi
+
+
+
+18-6-2017
+Realizzata la versione B2 che però produce valori di fitness medi più bassi rispetto alla versione A).
+Probabilmente a causa della codifica densa contro quella dispersiva. In altre parole, nello spazio vettoriale, gli errori sono più "grossi" quando ci sono.
+In fact, anche se la fitness risulta mediamente più bassa (70% vs 80%) il numero di file classificati male è inferiore sia sul training set che sul control set (116-181 e 35-38).
+Bisogna anche ammettere che la variante "spatial" ha runnato 50 generazioni in più. 
+Continuerò i test nell'ambiente più equo possibile onde stabilire l'approccio migliore. 
+EDIT: Confermato che il numero di errori è minore con la rappresentazione vettoriale.
+Potrebbe essere sensato spezzare il problema in N sottoreti distinte, ciascuna che riconosca solo il proprio genere per poi combinare i risultati? Dovrei tentare con più generazioni?
+Proseguirò vari test.
+
+
+18-6-2017
+Mi rendo conto che il probabilmente posso solo arrivare così lontano con questo training set. Il fatto è che tutte le mie coppie input-output sono "unidimensionali" (cioè, sono tutti brani
+classificati strettamente in un genere, cosa che in realtà non sarà mai vera).
+L'approccio migliore sarebbe avere un corpus di brani classificati a mano da un po' di gente e ottenere la classificazione spaziale con le percentuali dei generi:
+ex.: un brano è stato classificato dall' 80% degli utenti come POP , dal 10% come ROCK e dal 10% come JAZZ? Modello spaziale -> (0.8,0.1,0.1)
+Solo così, credo, si possa raggiungere un sufficiente grado di generalizzazione e completezza.
+Prossimo obiettivo: cercare in rete un corpus che sia adatto a questo scopo.
+
+
+28-6-2017
+As a final step, I should probably automate the feature extraction process. I have access to jsymbolic's source code, so I should be able to build a "custom" jar (without a GUI)
+to extract features from a list of files (say, from a directory), and output to some "temp.xml". From that, I should be able to call that jar from python, via subproccess.
+After that, I'm gonna wrap it all in a module (possibly a class), rather then in datatools. Some "midimanipulation.py" sounds good to me, actually.
+
+Possibly, I would need to debug the python-jar argument-passing interaction, but it shouldn't be much of a hussle, should it? Future me, you better not be laughing
+
+--10-7-2017 : Done, actually pretty easy, turns out that jsymbolic2.jar was already apt to the command line use. Nice done, devs

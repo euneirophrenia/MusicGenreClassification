@@ -1,0 +1,10 @@
+MP3NEAT/MP3/
+MP3NEAT/MIDI/
+MP3NEAT/Stuff/
+NEATTest/Errori/
+NEATTest/midi/
+NEATTest/MP3/
+*.dat
+*.pickle
+
+MP3Neat/.idea/

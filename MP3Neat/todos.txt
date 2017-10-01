@@ -1,0 +1,105 @@
+
+################### CODING ERRORS ####################
+
+1) Check why sometimes adding past best elements causes key exceptions after several runs
+    <SOLVED POSSIBLY, 23/9/2017, IN MTS HISTORY BEST WERE REINSERTED SEVERAL TIMES LEADING TO DISCREPANCIES POSSIBLY DUE TO WRONG ANCESTORS>
+
+2) Solve the issue with the best of CJR/3 who has 'rock' and 'classic' mixed.
+    - Find a better individual
+    - Delete the problematic record
+    - Edit the record genes to match standard classification
+        - swap every connection between "0" and "2"   <SO STUPIDLY HARD, WHY IS THIS SO HARD>
+
+3) Improve error feedback, e.g. when no run is found in history, give the proper error instead of random exceptions
+
+4) -----> GET ABSOLUTELY RID OF THE RECORDS CONTAINING "NAN" IN THE TRAINING SET <---------
+    - Also, find a way to work around them in case they happen in new data
+    - Also, start moving all datasets to ARFF file, since it's like 10 times lighter than PICKLE
+        - maybe, keep only the register pickled, since i kinda need right to save objects
+
+
+#################### TO DO #################################
+
+1) Partition MP3 dataset to create a control and a swap set <DONE BUT THE SELECTED GENRES ARE FAR FROM PERFECT>
+
+2) Start evolving / benchmarking those <DONE>
+
+3) Fix statistics.plotRanks(), so that it saves the graphs. Kinda doable? Maybe?
+
+4) Actually make GPU working. It could be so awesome, with larger dataset
+
+5) Create a custom config file and parser on top of the standard neat one
+        - Add a custom MTS section for all MTS related parameters
+            - dataMutationRate
+            - dataMutationInterval
+            - potentially others in a future
+        - Make it so it automatically determines the best number of parallel process if not otherwise instructed
+            - check sys / os modules for system info
+
+6) Finish datatools.Utility.generalMapping once for all, so that it always returns something useful and doesn't throw random exceptions
+        - Must find some convention to map genres if len(genres) > order, also different for order==1
+        - May be computational eeeeeeeeeeexpensiveeeeeeeee if there's a lot of genres
+
+7) Actually make checkpoints work. Never used them before, since i didn't really needed but still, make them work.
+
+8) Check if, in Utility.mapListOfGenresToVector, a hypersphere is better than a hypercube. I can't figure it out on paper
+        - For the sake of creating datasets, a cube suggests an easier partition, without much intertwining
+        -> Hypersphere should be better for the sake of data consistency
+
+9) A GUI! Many specific things can be generalized only with a GUI and some path prompting interface. So.. I think i will
+    take the rust off of my PySide old love.
+    - During this overhaul, i could also think moving some of the data to .arff file, incapsulating them on a proper object
+        - maybe an object exposing both the 'dot notation' and the 'indexer notation' for compatibility purposes.
+    - Make it possible to edit a dataset, import, visualize and also make it possible to write "on the fly" python code to
+        compute some statistic, like a coding area.
+
+################ IMPROVEMENTS ##########################
+
+1) History best fetching in Datamanager.preparedata can use a filtering function to determine
+        - How to evaluate each individual
+        - How many to select
+
+2) Convert persistance so that nets and genomes are no more saved as plain object.
+        - Either save the genome and later rebuild the net when needed, in some format
+            - might also be the case of the configuration
+        - Or find another way of storing robust with regard to object signature changing
+
+
+3) Instead of replacing individuals in a new population, use past best as initial state.
+        - Check if code automatically fills with childs / mutations
+        - If not, make it so it's stable (see <Coding Errors/1>)
+
+4) Refactor lesser modules, either
+        - Delete them, splitting their few useful function in others
+        - Move them all to a "deprecated" folder
+
+5) Use type annotations and docstring to document what the actual fuck is being done
+
+6) Make it easier to change underlying tools in extraction
+
+7) Also, optimize MIDI ListFeatureExtraction
+
+8) Make a lot of things more generic, e.g
+        - main.py > remove hard coded paths
+            - make it clear that the naming convention has been removed, and now dataset can be named freely (deus vult)
+
+9) Clarify datatools.Datamanager.get with meta. If triggered on the register obviously fails, since meta searches for genre
+    - Could add a generic meta for a collection of data
+        - something like size and population size grouped by a certain key ('genre' for datasets / w/e -like 'timestamp' for register)
+            - would require a "key" kwarg to the meta call, maybe defaulting to 'genre' (since i'm not doing shit with register meta now anyways)
+            - this would be actually pretty useful since i often need to search how many runs i did in the register with certain properties
+    <DONE 23/9/2017, MUST DEBUG AND PROPERLY CHECK THO>
+
+10) Check how performance varies introducing a even so little connection cost in the genome fitness.
+        - Common technique to obtain more regular nets, might not be of interest here tho
+        - Check same with intermediate nodes.
+
+############## WHY THE FUCK DID I DO THIS #####################
+
+1) Why did I thought it would be a good idea to group history best record by training score? I would understand sorting,
+if there was some kind of number limit, but why grouping?
+
+2) Why did I create a throwaway dictionary just to copy it to result? (metadatafromlist)
+    - NOW I KNOW, since I want both the info of the first dict and some statistic which would be hard to compute with 1 dict only.
+
+

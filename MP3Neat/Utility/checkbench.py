@@ -3,7 +3,7 @@ import numpy
 from NEAT.neatcore import *
 from statistics import *
 import itertools
-import mixedshit
+import mixed_utils
 import collections
 import os
 import pandas
@@ -43,8 +43,8 @@ def plotranks():
     exit(0)"""
 
     for d, a, s in itertools.product(datasets, algorithms, spatials):
-        values = [x['control score'] for x in history if x['algorithm'] == a and
-                  x['spatial'] == s and datatools.DataManager().compatible(datatools.DataManager().metadata(d), x['training set'])]
+        values = [x[RegistryKey.CONTROL_SCORE] for x in history if x[RegistryKey.ALGORITHM] == a and
+                  x[RegistryKey.OUTPUT_DIMENSION] == s and datatools.DataManager().compatible(datatools.DataManager().metadata(d), x[RegistryKey.TRAIN_SET])]
         if len(values) > 0:
             print(d, a, s, ' \t', len(values), ':', averagePerformance(d, a, s), sum(values) / len(values))
 
@@ -170,14 +170,7 @@ if __name__=='__main__':
 
     #print(len([x for x in train if any(math.isnan(x[k]) for k in x if type(x[k])==float)]))
 
-    datamanager.save(control, './Datasets/MP3/control.arff')
-    datamanager.save(raw, './Datasets/MP3/all.arff')
-    datamanager.save(swap, './Datasets/MP3/swap.arff')
-    datamanager.save(datamanager.get('./Datasets/MP3/filtered.dat'), './Datasets/MP3/filtered.arff')
-
-
-
-
+    plotranks()
 
 
 

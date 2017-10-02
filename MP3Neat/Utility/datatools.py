@@ -5,14 +5,8 @@ import xml.etree.ElementTree as etree
 import numpy, datetime, ast
 import collections, itertools
 import subprocess
-from enum import Enum
+from enums import IODirection
 
-class IODirection(Enum):
-    Load = 1
-    Save = 2
-
-    def __str__(self):
-        return self.name.lower()
 
 
 _dataManagerIOFunctions = {}
@@ -98,6 +92,7 @@ class DataManager:
     def _savePickle(data, output='./register.dat'):
         with open(output, "ab") as f:
             pickle.dump(data, f)
+
 
     @staticmethod
     @IOHandler(IODirection.Save, forDatasetExtensions=['arff'])
@@ -217,7 +212,7 @@ class DataManager:
 
     @staticmethod
     def toArff(data):
-        py_to_arff = {float:'REAL', str:'STRING', int:'REAL', datetime.datetime:'DATE', list:'STRING'}
+        py_to_arff = {float:'REAL', str:'STRING', int:'REAL', datetime.datetime:'DATE', list:'STRING', dict:'STRING', tuple:'STRING'}
         if len(data)<1:
             return [],[]
         feats = sorted(data[0].keys())
@@ -229,12 +224,14 @@ class DataManager:
     def parseArff(arffobject):
         arff_to_py = {'REAL':float, 'STRING':str, 'DATE':datetime.datetime}
         labels = [x[0] for x in arffobject['attributes']]
+        toactivate = [x[0] for x in arffobject['attributes'] if x[1]=='STRING']
         res=[]
         for datum in arffobject['data']:
             current={}
             for i,feature in enumerate(datum):
                 current[labels[i]] = arff_to_py[arffobject['attributes'][i][1]](feature) if feature is not None else None
-            current['genre']=ast.literal_eval(str(current['genre']).replace('\\',''))
+                if feature in toactivate:
+                    current[labels[i]] = ast.literal_eval(str(current[labels[i]]).replace('\\',''))
             res.append(current)
         return res
 
@@ -546,7 +543,7 @@ class Utility:
         res = numpy.zeros_like(mapping[lista[0]])
         for g in lista:
             res += numpy.array(mapping[g])
-        return res / numpy.linalg.norm(res)   #hypersphere, remove the norm to map to a hypercube. I'd just stick to the sphere and see what happens
+        return res #/ numpy.linalg.norm(res)   #hypersphere, remove the norm to map to a hypercube. I'd just stick to the sphere and see what happens
 ##hypersphere gotta be better, but for now it won't matter since only 1 genre per time is considered
 
     @staticmethod
@@ -566,3 +563,5 @@ class Utility:
     def closestVector(v, lista):
         arrayv = numpy.array(v)
         return min([(x, numpy.linalg.norm(arrayv - numpy.array(x))) for x in lista], key= lambda couple:couple[1])
+
+

@@ -1,6 +1,7 @@
 import datatools
 import matplotlib.pyplot as plot
 import matplotlib.patches as patches
+from enums import RegistryKey
 
 datamanager = datatools.DataManager()
 history = datamanager.get('./register.dat')
@@ -26,9 +27,9 @@ def crunch_output_node(keynode, tempvals, best, labels, weight=1, visited=[]):
 
 
 def rank(dataset, algorithm, spatial):
-    data = [x for x in history if  x['algorithm']==algorithm and x['spatial']==spatial
-            and datatools.DataManager.compatible(datamanager.metadata(dataset), x['training set'])
-            and x['best genome'] is not None and x['generations']>100] #gen>100 to exclude some test runs to debug problems
+    data = [x for x in history if  x[RegistryKey.ALGORITHM]==algorithm and x[RegistryKey.OUTPUT_DIMENSION]==spatial
+            and datatools.DataManager.compatible(datamanager.metadata(dataset), x[RegistryKey.TRAIN_SET])
+            and x[RegistryKey.BEST_GENOME] is not None and x[RegistryKey.GENERATIONS]>100] #gen>100 to exclude some test runs to debug problems
 
     if len(data)==0:
         #print("No run found")
@@ -37,23 +38,23 @@ def rank(dataset, algorithm, spatial):
     _, _, labels, _ = datamanager.preparedata(dataset, order=spatial)
     allfeatuers = [labels[x] for x in labels if x < 0]
 
-    ranked = {key : {f :0.0 for f in allfeatuers} for key in data[0]['training set']['genres']}
+    ranked = {key : {f :0.0 for f in allfeatuers} for key in data[0][RegistryKey.TRAIN_SET]['genres']}
     if spatial==1:
         ranked['Output'] = {f :0.0 for f in allfeatuers} ## workaround
 
     scoresum=0.0
 
     for datum in data:
-        best = datum['best genome']
-        scoresum+= datum['control score'] ** 2
+        best = datum[RegistryKey.BEST_GENOME]
+        scoresum+= datum[RegistryKey.CONTROL_SCORE] ** 2
 
-        for i in range(0, datum['spatial']):
+        for i in range(0, datum[RegistryKey.OUTPUT_DIMENSION]):
             crunch_output_node(i, ranked[labels[i]], best, labels)
 
 
         for k in ranked:
             for f in ranked[k]:
-                ranked[k][f] *= datum['control score']**2
+                ranked[k][f] *= datum[RegistryKey.CONTROL_SCORE]**2
 
     for k in ranked:
         for f in ranked[k]:
@@ -80,21 +81,21 @@ def rank(dataset, algorithm, spatial):
 
 def bestPerformer(dataset):
     m = datatools.metadata(dataset)
-    data = [x for x in history if datatools.DataManager.compatible(x['training set'], m)]
+    data = [x for x in history if datatools.DataManager.compatible(x[RegistryKey.TRAIN_SET], m)]
     best = (1,None)
     for d in data:
-        if 1.0*len(d['control errors'])/d['control set']['size'] < best[0]:
-            best =(1.0*len(d['control errors'])/d['control set']['size'] ,d)
+        if 1.0*d[RegistryKey.CONTROL_ERRORS]/d[RegistryKey.CONTROL_SET]['size'] < best[0]:
+            best =(1.0*d[RegistryKey.CONTROL_ERRORS]/d[RegistryKey.CONTROL_SET]['size'] ,d)
     return best
 
 def averagePerformance(dataset, algorithm, spatial):
     m = datamanager.metadata(dataset)
-    data = [x for x in history if datatools.DataManager.compatible(x['training set'], m) and x['algorithm']==algorithm
-            and x['spatial']==spatial
-            and x['generations']>100]
+    data = [x for x in history if datatools.DataManager.compatible(x[RegistryKey.TRAIN_SET], m) and x[RegistryKey.ALGORITHM]==algorithm
+            and x[RegistryKey.OUTPUT_DIMENSION]==spatial
+            and x[RegistryKey.GENERATIONS]>100]
     total=0
     for x in data:
-        total+= 1.0*len(x['control errors'])/x['control set']['size']
+        total+= 1.0*x[RegistryKey.CONTROL_ERRORS]/x[RegistryKey.CONTROL_SET]['size']
 
     return 1.0 - total/len(data) if len(data)>0 else 0
 
@@ -153,7 +154,7 @@ def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False):
     plot.grid()
     plot.gcf().subplots_adjust(bottom=0.3)
     mng=plot.get_current_fig_manager()
-    mng.resize(*mng.window.maxsize())
+#    mng.resize(*mng.window.maxsize())
 
     if not andSaveThem:
         plot.show()

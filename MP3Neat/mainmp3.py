@@ -1,6 +1,7 @@
 from NEAT.neatcore import StandardNEAT, MTSNEAT, standardEvaluate
 from Utility import datatools
 import datetime
+from enums import RegistryKey
 
 ##General Setup
 generations = 1000                                                               # Number of generations to run
@@ -62,14 +63,15 @@ if __name__ == '__main__':
         print("\nFitness of best individual against brand new data: ", against_new, "\n")
         newerrors=errorFetcher._showerrors(control_set, ins, outs, "new", best)[0]
 
-        datatools.DataManager.save({'best net':best, 'training score':against_trained, 'control score':against_new,
-                 'training errors':trainerrors, 'control errors':newerrors, 'generations':generations,
-                 'kind':kind, 'parallel cores':cores, 'training set':datamanger.metadata(training_set),
-                 'control set': datamanger.metadata(control_set), 'timestamp':datetime.datetime.now(),
-                 'algorithm': algorithm[use_MTSNEAT], 'swapping set':datamanger.metadata(swapping_set,forceRefresh=True) if use_MTSNEAT else None,
-               'swapping errors':swaperrors if use_MTSNEAT else None, 'swap score':against_swapped if use_MTSNEAT else None,
-               'spatial':runner.config.genome_config.num_outputs, 'configuration':runner.config,
-               'best genome':bestgenome, 'reuse past':reuse_past_best}, outputfile='./register_mp3.dat')
+        datatools.DataManager.save({RegistryKey.BEST_NET:best, RegistryKey.TRAIN_SCORE:against_trained, RegistryKey.CONTROL_SCORE:against_new,
+                 RegistryKey.TRAIN_ERRORS:len(trainerrors), RegistryKey.CONTROL_ERRORS:len(newerrors), RegistryKey.GENERATIONS:generations,
+                 RegistryKey.NET_KIND:kind, RegistryKey.CPU_CORES:cores, RegistryKey.TRAIN_SET:datamanger.metadata(training_set),
+                 RegistryKey.CONTROL_SET: datamanger.metadata(control_set), RegistryKey.TIMESTAMP:datetime.datetime.now(),
+                 RegistryKey.ALGORITHM: algorithm[use_MTSNEAT], RegistryKey.SWAP_SET:datamanger.metadata(swapping_set,forceRefresh=True) if use_MTSNEAT else None,
+               RegistryKey.SWAP_ERRORS:len(swaperrors) if use_MTSNEAT else None, RegistryKey.SWAP_SCORE:against_swapped if use_MTSNEAT else None,
+               RegistryKey.OUTPUT_DIMENSION:runner.config.genome_config.num_outputs, RegistryKey.CONFIGURATION:runner.config,
+               RegistryKey.BEST_GENOME:bestgenome, RegistryKey.REUSE_PREVIOUS:reuse_past_best}, outputfile='./register_mp3.dat')
 
 
 ### todo:: MAKE THE HISTORY KEYS A ENUM SO THAT I CAN'T GET IT WRONG
+### also, don't save ALL the errors, just save the number, it doesn't matter anymore the specific file

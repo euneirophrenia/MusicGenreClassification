@@ -4,7 +4,11 @@ MP3NEAT/Stuff/
 NEATTest/Errori/
 NEATTest/midi/
 NEATTest/MP3/
-*.dat
+NEATTest/**/*.dat
+MP3NEAT/Datasets/**/*.dat
 *.pickle
 
 MP3Neat/.idea/
+
+MP3Neat/register_mp3.dat
+MP3Neat/extended_register.dat

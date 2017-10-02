@@ -53,6 +53,11 @@
     - Make it possible to edit a dataset, import, visualize and also make it possible to write "on the fly" python code to
         compute some statistic, like a coding area.
 
+
+10) REWORK THE REGISTRY, SWITCH TO ANOTHER FORMAT, LIKE ARFF
+        - ALSO CREATE ENUMS TO STORE THE REGISTER KEYS SO THAT IT'S CLEAR AND STABLE
+            - NO RANDOM ERRORS DUE TO SPELLING MISTAKES
+
 ################ IMPROVEMENTS ##########################
 
 1) History best fetching in Datamanager.preparedata can use a filtering function to determine

@@ -162,15 +162,23 @@ def partition():
 if __name__=='__main__':
     raw, meta = datamanager.get('./Datasets/MP3/all.dat', andGetMeta=True)
 
-    train = datamanager.get('./Datasets/MP3/training.pickle')
-    control = datamanager.get('./Datasets/MP3/control.pickle')
-    swap = datamanager.get('./Datasets/MP3/swap.pickle')
+    train = datamanager.get('./Datasets/MP3/train.arff')
+    control = datamanager.get('./Datasets/MP3/control.arff')
+    swap = datamanager.get('./Datasets/MP3/swap.arff')
     compr = datamanager.get('./Datasets/MP3/compressed.pickle')
-    print(len(train), len(control), len(swap), len(compr))
+    print(len(train), len(control), len(swap), len(compr), len(raw))
 
     #print(len([x for x in train if any(math.isnan(x[k]) for k in x if type(x[k])==float)]))
 
-    plotranks()
+    res=datamanager.get('./Datasets/MP3/filtered.pickle')
+    processed = {x['title']: x for x in res}
+
+
+##todo:: create pickle files from arffs and process genre -> genre.split('/')
+##todo:: finish toArff / parseArff so that a attribute list/tuple is mapped with multiple rows
+## might be a pain to generate all the possible combos, in case of multiple list-attributes
+
+
 
 
 

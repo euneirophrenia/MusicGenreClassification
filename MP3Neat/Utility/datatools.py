@@ -139,14 +139,27 @@ class DataManager:
                 if field.tag=='data_set_id':
                     current['title']=path.basename(field.text)
                 else:
-                    name_tag = '' if len(field)==2 else '_0'
-                    for i in range(1, len(field)):
-                        try:
-                            current[field[0].text + name_tag] = float(field[i].text)
-                        except ValueError:
-                            current[field[0].text + name_tag] = float(str(field[i].text).replace(',','.'))
-                        name_tag = '_'+str(i)
+                    if len(field) == 2:
+                        current[field[0].text] = float(str(field[1].text).replace(',','.'))
+                    else:
+                        current[field[0].text] = []
+                        for i in range(1, len(field)):
+                            current[field[0].text].append(float(str(field[i].text).replace(',','.')))
             res.append(current)
+
+        lists = set(f for x in res for f in x if type(x[f])==list)
+        finallengths = {f : max([len(x[f]) if type(x[f])==list else 1 for x in res]) for f in lists}
+        for x in res:
+            for f in lists:
+                value = x[f]
+                if type(x[f])==float:
+                    value = [value]
+                for i in range(0, len(value)):
+                    x[f+'_'+str(i)] = value[i]
+                if len(value) < finallengths[f]:
+                    for i in range(len(value), finallengths[f]-len(value)+1):
+                        x[f+'_'+str(i)] = 0.0 ### doing this because if length is not uniform ACE thinks it's a 0
+                x.pop(f,None)
         return res
 
     @staticmethod
@@ -211,12 +224,28 @@ class DataManager:
 
 
     @staticmethod
+    #todo::: fix if an actual list with more than 1 value enters (e.g. the genre) it produces an unreadble arff file
     def toArff(data):
-        py_to_arff = {float:'REAL', str:'STRING', int:'REAL', datetime.datetime:'DATE', list:'STRING', dict:'STRING', tuple:'STRING'}
+        py_to_arff = {float:lambda x : 'REAL',
+                      str:lambda x : 'STRING',
+                      int: lambda x: 'REAL',
+                      datetime.datetime: lambda x : 'DATE',
+                      list: lambda x : list(set(elem for datum in data for elem in datum[x]))}#, #warning only first element gets through
+                      #tuple: lambda x : list(set(elem for datum in data for elem in datum[x]))}
         if len(data)<1:
             return [],[]
+
         feats = sorted(data[0].keys())
-        attrs =[(f, py_to_arff[type(data[0][f])]) for f in feats]
+        attrs =[(f, py_to_arff[type(data[0][f])](f)) for f in feats]
+        lists = set(f for x in data for f in x if type(x[f]) == list)
+        res = []
+        for x in data:
+            for f in lists:
+                x[f] = x[f][0]
+                ###would have happened anyway if you try to save a list of values, the only meaningful way would be to duplicate data
+                ##which, at some point in time i will do, but for now it's a bit too much
+            res.append(x)
+        data = res
         data = [[x[f] for f in feats] for x in data]
         return attrs, data
 
@@ -224,14 +253,12 @@ class DataManager:
     def parseArff(arffobject):
         arff_to_py = {'REAL':float, 'STRING':str, 'DATE':datetime.datetime}
         labels = [x[0] for x in arffobject['attributes']]
-        toactivate = [x[0] for x in arffobject['attributes'] if x[1]=='STRING']
         res=[]
         for datum in arffobject['data']:
             current={}
             for i,feature in enumerate(datum):
                 current[labels[i]] = arff_to_py[arffobject['attributes'][i][1]](feature) if feature is not None else None
-                if feature in toactivate:
-                    current[labels[i]] = ast.literal_eval(str(current[labels[i]]).replace('\\',''))
+            current['genre']=current['genre'].split('/')
             res.append(current)
         return res
 
@@ -563,5 +590,4 @@ class Utility:
     def closestVector(v, lista):
         arrayv = numpy.array(v)
         return min([(x, numpy.linalg.norm(arrayv - numpy.array(x))) for x in lista], key= lambda couple:couple[1])
-
 

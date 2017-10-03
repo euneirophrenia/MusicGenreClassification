@@ -9,7 +9,7 @@ pop_size              = 2000
 reset_on_extinction   = 0
 
 [DefaultGenome]
-num_inputs              = 41
+num_inputs              = 106
 num_hidden              = 2
 num_outputs             = 4
 initial_connection      = fs_neat

@@ -224,28 +224,45 @@ class DataManager:
 
 
     @staticmethod
-    #todo::: fix if an actual list with more than 1 value enters (e.g. the genre) it produces an unreadble arff file
+    def _preprocessForArff(data):
+        lists = sorted(list(set(f for x in data for f in x if type(x[f]) == list or type(x[f]) == tuple)))
+        strings = sorted(list(set(f for x in data for f in x if type(x[f])==str)))
+        res = []
+        if len(lists)>0:
+            for x in data:
+                values = itertools.product(*[x[f] for f in lists])
+                for v in values:
+                    newone = x.copy()
+                    for i, elem in enumerate(v):
+                        if type(elem)==str:
+                            elem = str(elem).replace('\n','')
+                        newone[lists[i]] = elem
+                    res.append(newone)
+        else:
+            res = data
+
+        if len(strings)>0:
+           for i in range(0, len(res)):
+               for f in strings:
+                   res[i][f] = str(res[i][f]).replace('\n','').replace('\r','').replace(',',';')
+
+        return res
+
+
+    @staticmethod
     def toArff(data):
         py_to_arff = {float:lambda x : 'REAL',
                       str:lambda x : 'STRING',
                       int: lambda x: 'REAL',
                       datetime.datetime: lambda x : 'DATE',
-                      list: lambda x : list(set(elem for datum in data for elem in datum[x]))}#, #warning only first element gets through
-                      #tuple: lambda x : list(set(elem for datum in data for elem in datum[x]))}
+                      list: lambda x : list(set(elem for datum in data for elem in datum[x])),
+                      tuple: lambda x : list(set(elem for datum in data for elem in datum[x]))}
         if len(data)<1:
             return [],[]
 
         feats = sorted(data[0].keys())
         attrs =[(f, py_to_arff[type(data[0][f])](f)) for f in feats]
-        lists = set(f for x in data for f in x if type(x[f]) == list)
-        res = []
-        for x in data:
-            for f in lists:
-                x[f] = x[f][0]
-                ###would have happened anyway if you try to save a list of values, the only meaningful way would be to duplicate data
-                ##which, at some point in time i will do, but for now it's a bit too much
-            res.append(x)
-        data = res
+        data = DataManager._preprocessForArff(data)
         data = [[x[f] for f in feats] for x in data]
         return attrs, data
 
@@ -257,13 +274,18 @@ class DataManager:
         for datum in arffobject['data']:
             current={}
             for i,feature in enumerate(datum):
-                current[labels[i]] = arff_to_py[arffobject['attributes'][i][1]](feature) if feature is not None else None
-            current['genre']=current['genre'].split('/')
+                obj = arffobject['attributes'][i][1]
+                if type(obj)!=list:
+                    converted = arff_to_py.get(obj,obj)(feature) if feature is not None else None
+                else:
+                    converted = feature if feature is not None else None
+
+                current[labels[i]] = converted
+
             res.append(current)
         return res
 
     @staticmethod
-    #@loadingFunction(forDatasetExtensions=['arff'])
     @IOHandler(IODirection.Load, forDatasetExtensions=['arff'])
     def _loadAllFromArff(file):
         with open(file, 'r') as f:

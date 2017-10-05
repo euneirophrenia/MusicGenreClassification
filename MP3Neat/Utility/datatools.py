@@ -5,7 +5,7 @@ import xml.etree.ElementTree as etree
 import numpy, datetime, ast
 import collections, itertools
 import subprocess
-from enums import IODirection
+from enums import IODirection, RegistryKey
 
 
 
@@ -137,7 +137,7 @@ class DataManager:
             current = {}
             for field in datum:
                 if field.tag=='data_set_id':
-                    current['title']=path.basename(field.text)
+                    current['title']=field.text
                 else:
                     if len(field) == 2:
                         current[field[0].text] = float(str(field[1].text).replace(',','.'))
@@ -382,7 +382,7 @@ class Extractor:
         return data, bestnet, bestorder, sorted(genres.split('#')), controlscore
 
     def classify(self, files, orderSelectionCriterium = max, amongGenres = None,
-                 runEvaluationCriterium = lambda h : 1 - (len(h['control errors']) / h['control set']['size']),
+                 runEvaluationCriterium = lambda h : 1 - (h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size']),
                  register = './register.dat'):
 
         data, bestnet, bestorder, genres, controlscore = self._prepareFiles(files, orderSelectionCriterium, amongGenres,
@@ -472,7 +472,7 @@ class WaveFormExtractor(Extractor):
         return res
 
     def classify(self, files, orderSelectionCriterium = max, amongGenres = None,
-                 runEvaluationCriterium = lambda h : 1 - (len(h['control errors']) / h['control set']['size']),
+                 runEvaluationCriterium = lambda h : 1 - (h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size']),
                  register = './register.dat', threshold=0.2):
 
         data, bestnet, bestorder, genres, controlscore = Extractor._prepareFiles(self, files, orderSelectionCriterium,
@@ -537,17 +537,17 @@ class Utility:
 
     @staticmethod
     def historyBestByOrderAndGenre(runEvaluationCriterium, sep='#', register ='./register.dat'):
-        history = [x for x in DataManager().get(register) if x['generations']>500 and x['best net'] is not None]
+        history = [x for x in DataManager().get(register) if x[RegistryKey('generations')]>500 and x[RegistryKey('best net')] is not None]
         aggregated = {}
         for h in history:
-            key = sep.join(sorted(list(map(lambda x: x.lower(), h['training set']['genres'])))) # hacks
-            if (h['spatial'], key) not in aggregated:
-                bestrun = max([x for x in history if h['spatial']==x['spatial']
+            key = sep.join(sorted(list(map(lambda x: x.lower(), h[RegistryKey('training set')]['genres'])))) # hacks
+            if (h[RegistryKey('spatial')], key) not in aggregated:
+                bestrun = max([x for x in history if h[RegistryKey('spatial')]==x[RegistryKey('spatial')]
                                                         and key == sep.join(sorted(list(map(lambda x: x.lower(),
-                                                                                       x['training set']['genres']))))],
+                                                                                       x[RegistryKey('training set')]['genres']))))],
                               key=runEvaluationCriterium)
 
-                aggregated[(h['spatial'], key)] = bestrun['best net'], runEvaluationCriterium(bestrun)
+                aggregated[(h[RegistryKey('spatial')], key)] = bestrun[RegistryKey('best net')], runEvaluationCriterium(bestrun)
 
         return aggregated
 

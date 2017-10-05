@@ -62,7 +62,7 @@ def testClassify(files=['./MIDI/Jazz/route_66_gw.mid', './MIDI/ClassicMusic/fure
     res = datatools.MIDIExtractor().classify(files,
                                              orderSelectionCriterium=max,
                                              runEvaluationCriterium=lambda h: 1 - (
-                                             len(h['control errors']) / h['control set']['size']),
+                                             h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size']),
                                              register=register)
     print(res)
     return res
@@ -174,8 +174,6 @@ if __name__=='__main__':
     res=datamanager.get('./Datasets/MP3/filtered.dat')
     processed = {x['title']: x for x in res}
     #datamanager.save(res, './test.arff')
-    lols=datamanager.get('./test.arff')
-    print(lols[0]['title'], lols[0]['genre'])
 
 ##todo:: create pickle files from arffs processing genre -> genre.split('/')
 

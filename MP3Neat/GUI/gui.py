@@ -1,39 +1,53 @@
 import wx
-import wx.adv
 from os import path as p
+import os
 import subprocess
 import datatools
-import builtins
 
-class Settings(wx.Dialog):
+import matplotlib
+matplotlib.use('WXAgg')
+
+import builtins
+import statistics
+
+
+datasets = ['./Datasets/MIDI/'+file for file in os.listdir('./Datasets/MIDI') if '_' not in file]
+
+class SettingsDialog(wx.Dialog):
     def __init__(self, settings, *args, **kwargs):
         wx.Dialog.__init__(self, *args, **kwargs)
         self.settings = settings
 
-        self.SetSize(550, 200)
+        self.SetSize(600, 250)
 
         self.panel = wx.Panel(self)
-        self.button_ok = wx.Button(self.panel, label="OK", style = wx.ALIGN_CENTER_HORIZONTAL)
-        self.button_cancel = wx.Button(self.panel, label="Cancel", style = wx.ALIGN_CENTER_HORIZONTAL)
-        self.button_ok.Bind(wx.EVT_BUTTON, self.onOk)
-        self.button_cancel.Bind(wx.EVT_BUTTON, self.onCancel)
+        self.button_ok, self.button_cancel = self._configureButtons()
 
         self.comboboxes = []
         self.sizer = wx.GridSizer(cols = 2, rows = len(settings)+1, hgap=5, vgap=3)
 
         for i, key in sorted(enumerate(settings)):
-            combobox = wx.ComboBox(self.panel, id=wx.ID_ANY, value=settings[key][1], choices = settings[key][0],
+            combobox = wx.ComboBox(self.panel, id=wx.ID_ANY, value=str(settings[key][1]), choices = settings[key][0],
                                    style = wx.CB_READONLY, name=key)
             self.comboboxes.append(combobox)
 
-            self.sizer.Add(wx.StaticText(self, id=wx.ID_ANY, label=key, style=wx.ALIGN_LEFT), 0, wx.EXPAND| wx.ALL)
-            self.sizer.Add(combobox, 0, wx.EXPAND| wx.ALL)
+            self.sizer.Add(wx.StaticText(self, id=wx.ID_ANY, label=key, style=wx.ALIGN_LEFT), 0, wx.EXPAND| wx.ALL, border=5)
+            self.sizer.Add(combobox, 0, wx.EXPAND| wx.ALL, border=5)
 
 
-        self.sizer.Add(self.button_ok, 0, wx.EXPAND| wx.ALL)
-        self.sizer.Add(self.button_cancel, 0, wx.EXPAND | wx.ALL)
+        self.sizer.Add(self.button_ok, 0, wx.EXPAND| wx.ALL, border=5)
+        self.sizer.Add(self.button_cancel, 0, wx.EXPAND | wx.ALL, border=5)
 
         self.panel.SetSizerAndFit(self.sizer)
+        self.CentreOnScreen()
+
+
+    def _configureButtons(self):
+        button_ok = wx.Button(self.panel, label="Ok", style=wx.ALIGN_CENTER_HORIZONTAL)
+        button_cancel = wx.Button(self.panel, label="Cancel", style=wx.ALIGN_CENTER_HORIZONTAL)
+        button_ok.Bind(wx.EVT_BUTTON, self.onOk)
+        button_cancel.Bind(wx.EVT_BUTTON, self.onCancel)
+        return button_ok, button_cancel
 
 
     def onCancel(self, _):
@@ -48,9 +62,11 @@ class Settings(wx.Dialog):
         return self.settings
 
 
+
 class MainGUI(wx.Frame):
     ASKMIDIS = 39
     SETTINGS = 13
+    PLOT = 12
 
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY, "MIDI Genre Classification")
@@ -85,12 +101,15 @@ class MainGUI(wx.Frame):
 
         btn = wx.MenuItem(self.mainmenu, MainGUI.ASKMIDIS, "&Select MIDIs\tCTRL+O")
         setts = wx.MenuItem(self.mainmenu, MainGUI.SETTINGS, "&Settings\tCTRL+H")
+        plots = wx.MenuItem(self.mainmenu, MainGUI.PLOT, "&Plot Features Rank\tCTRL+P")
 
         self.mainmenu.Append(btn)
         self.mainmenu.Append(setts)
+        self.mainmenu.Append(plots)
 
         self.Bind(wx.EVT_MENU, self.askForMidis, id=MainGUI.ASKMIDIS)
         self.Bind(wx.EVT_MENU, self.Settings, id=MainGUI.SETTINGS)
+        self.Bind(wx.EVT_MENU, self.Plots, id=MainGUI.PLOT)
 
         self.menubar.Append(self.mainmenu, '&Menu')
         self.SetMenuBar(self.menubar)
@@ -98,8 +117,10 @@ class MainGUI(wx.Frame):
         self.Center()
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.list_ctrl, 2, wx.ALL | wx.EXPAND, 5)
+        sizer.Add(self.list_ctrl, 2, wx.ALL | wx.EXPAND, border=5)
         panel.SetSizer(sizer)
+
+        self.CentreOnScreen()
 
     def add_line(self, path, inferredgenre):
         self.nameToPath[p.basename(path)]=path
@@ -130,7 +151,7 @@ class MainGUI(wx.Frame):
         path = self.nameToPath[name]
         command = [self.settings['Audio playing command'][1], path]
 
-        dlg = wx.MessageDialog(self, 'Clicca per fermare', 'Playing '+name)
+        dlg = wx.MessageDialog(self, 'Chiudi per fermare', 'Playing '+name, style=wx.ICON_EXCLAMATION)
 
         processo= subprocess.Popen(command)
 
@@ -141,9 +162,20 @@ class MainGUI(wx.Frame):
         dlg.Destroy()
 
     def Settings(self, _):
-        box = Settings(self.settings, self, title='Settings', style=wx.RESIZE_BORDER | wx.CLOSE_BOX)
+        box = SettingsDialog(self.settings, self, title='Settings', style=wx.RESIZE_BORDER | wx.CLOSE_BOX)
         box.ShowModal()
         self.settings = box.GetSettings()
+
+
+    def Plots(self, _):
+        dialog = SettingsDialog({'Dataset':(datasets, datasets[0]), 'Output dimension':(['1','2','3'],1),
+                             'Algorithm':(['NEAT standard', 'Mutating Training Set NEAT'], 'NEAT Standard')}, self, title='Plot Ranks',
+                                style=wx.RESIZE_BORDER|wx.CLOSE_BOX | wx.MINIMIZE_BOX)
+        dialog.ShowModal()
+
+        settings = dialog.GetSettings()
+        statistics.plotRank(settings['Dataset'][1], settings['Algorithm'][1],
+                            int(settings['Output dimension'][1]))
 
 
 

@@ -175,6 +175,8 @@ if __name__=='__main__':
     processed = {x['title']: x for x in res}
     #datamanager.save(res, './test.arff')
 
+    plotranks()
+
 ##todo:: create pickle files from arffs processing genre -> genre.split('/')
 
 

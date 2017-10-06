@@ -25,7 +25,7 @@ class DataManager:
     """the bread and butter of everything here, from loading up datasets to saving and preparing them for the training.
     Basically, the persistance level, built to provide some caching functionalities.
     Some features are built to precisely match my needings (as the xml parsing, which works with the ACE XML format).
-    To provide support for other tools a subclass / rework might be needed"""
+    To provide support for other tools add the proper parse/load function and mark it with @IOHandler"""
     _datasets = {}
     _metas = {}
     __instance = None
@@ -186,6 +186,7 @@ class DataManager:
 
     @staticmethod
     def rebuildPathForMeta(meta, tag=''):
+        raise DeprecationWarning("Don't use this anymore, please.")
         res = './Datasets/' + '-'.join(sorted(meta['genres']))
         if tag != '':
             res += '_' + tag

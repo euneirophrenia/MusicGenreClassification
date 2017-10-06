@@ -7,6 +7,7 @@ datamanager = datatools.DataManager()
 history = datamanager.get('./register.dat')
 
 
+
 def crunch_output_node(keynode, tempvals, best, labels, weight=1, visited=[]):
     features = [(key[0], best.connections[key].weight) for key in best.connections if key[1] == keynode and key[0] < 0
                 and best.connections[key].enabled]
@@ -32,7 +33,6 @@ def rank(dataset, algorithm, spatial):
             and x[RegistryKey.BEST_GENOME] is not None and x[RegistryKey.GENERATIONS]>100] #gen>100 to exclude some test runs to debug problems
 
     if len(data)==0:
-        #print("No run found")
         return {},0
 
     _, _, labels, _ = datamanager.preparedata(dataset, order=spatial)
@@ -120,6 +120,7 @@ def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False):
     genres = ''
     for g in sorted(ranked[0]):
         genres+= g + ' - '
+
     plot.title(r"$\bf{Dataset}$ " + genres[:-3] + '\n'+r'$\bf{Algotithm}$ ' + algorithm + '\n'+r"$\bf{Output dimension}$: " + str(order) # +
                #r', $\bf{runs}$: ' + str(ranked[1])
               , fontname='Dejavu Serif')
@@ -154,7 +155,7 @@ def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False):
     plot.grid()
     plot.gcf().subplots_adjust(bottom=0.3)
     mng=plot.get_current_fig_manager()
-#    mng.resize(*mng.window.maxsize())
+    mng.frame.Maximize(True)
 
     if not andSaveThem:
         plot.show()

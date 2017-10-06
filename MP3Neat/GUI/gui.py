@@ -1,17 +1,65 @@
 import wx
-import demo
+import wx.adv
 from os import path as p
 import subprocess
 import datatools
+import builtins
+
+class Settings(wx.Dialog):
+    def __init__(self, settings, *args, **kwargs):
+        wx.Dialog.__init__(self, *args, **kwargs)
+        self.settings = settings
+
+        self.SetSize(550, 200)
+
+        self.panel = wx.Panel(self)
+        self.button_ok = wx.Button(self.panel, label="OK", style = wx.ALIGN_CENTER_HORIZONTAL)
+        self.button_cancel = wx.Button(self.panel, label="Cancel", style = wx.ALIGN_CENTER_HORIZONTAL)
+        self.button_ok.Bind(wx.EVT_BUTTON, self.onOk)
+        self.button_cancel.Bind(wx.EVT_BUTTON, self.onCancel)
+
+        self.comboboxes = []
+        self.sizer = wx.GridSizer(cols = 2, rows = len(settings)+1, hgap=5, vgap=3)
+
+        for i, key in sorted(enumerate(settings)):
+            combobox = wx.ComboBox(self.panel, id=wx.ID_ANY, value=settings[key][1], choices = settings[key][0],
+                                   style = wx.CB_READONLY, name=key)
+            self.comboboxes.append(combobox)
+
+            self.sizer.Add(wx.StaticText(self, id=wx.ID_ANY, label=key, style=wx.ALIGN_LEFT), 0, wx.EXPAND| wx.ALL)
+            self.sizer.Add(combobox, 0, wx.EXPAND| wx.ALL)
+
+
+        self.sizer.Add(self.button_ok, 0, wx.EXPAND| wx.ALL)
+        self.sizer.Add(self.button_cancel, 0, wx.EXPAND | wx.ALL)
+
+        self.panel.SetSizerAndFit(self.sizer)
+
+
+    def onCancel(self, _):
+        self.EndModal(wx.ID_CANCEL)
+
+    def onOk(self, _):
+        for i, key in enumerate(self.settings):
+            self.settings[key] = (self.settings[key][0],self.comboboxes[i].GetValue())
+        self.EndModal(wx.ID_OK)
+
+    def GetSettings(self):
+        return self.settings
 
 
 class MainGUI(wx.Frame):
     ASKMIDIS = 39
+    SETTINGS = 13
 
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY, "MIDI Genre Classification")
 
-        self.classifier = datatools.MIDIExtractor()
+
+        self.settings = {'Output dimension selection criterium':(['min','max'], 'min') , 'File type':(['MIDI'],'MIDI'),
+                         'Path to library' : (['./Utility/JSymbolic/jSymbolic2.jar'],'./Utility/JSymbolic/jSymbolic2.jar'),
+                         'Register path' :(['./saferegister.dat'],'./saferegister.dat'),
+                         'Audio playing command' : (['timidity'],'timidity')}
 
         panel = wx.Panel(self, wx.ID_ANY)
         self.index = 0
@@ -19,12 +67,14 @@ class MainGUI(wx.Frame):
         self.nameToPath={}
 
 
-        self.SetSize(900, 300)
+        self.SetSize(905, 320)
         self.list_ctrl = wx.ListCtrl(panel, size=(900, 300),
-                                     style=wx.LC_REPORT
-                                           | wx.BORDER_SUNKEN
+                                     style=wx.LC_REPORT |
+                                           wx.BORDER_SUNKEN |
+                                           wx.LC_HRULES |
+                                           wx.LC_VRULES
                                      )
-        self.list_ctrl.InsertColumn(0, 'Title', width=225)
+        self.list_ctrl.InsertColumn(0, 'Title', width=425)
         self.list_ctrl.InsertColumn(1, 'Inferred genre', width=155)
         self.list_ctrl.InsertColumn(2, 'Confidence', width=225)
 
@@ -34,12 +84,15 @@ class MainGUI(wx.Frame):
         self.mainmenu = wx.Menu()
 
         btn = wx.MenuItem(self.mainmenu, MainGUI.ASKMIDIS, "&Select MIDIs\tCTRL+O")
+        setts = wx.MenuItem(self.mainmenu, MainGUI.SETTINGS, "&Settings\tCTRL+H")
 
         self.mainmenu.Append(btn)
+        self.mainmenu.Append(setts)
 
         self.Bind(wx.EVT_MENU, self.askForMidis, id=MainGUI.ASKMIDIS)
+        self.Bind(wx.EVT_MENU, self.Settings, id=MainGUI.SETTINGS)
 
-        self.menubar.Append(self.mainmenu, '&The only menu I will EVER add')
+        self.menubar.Append(self.mainmenu, '&Menu')
         self.SetMenuBar(self.menubar)
 
         self.Center()
@@ -64,7 +117,9 @@ class MainGUI(wx.Frame):
 
         files = openFileDialog.GetPaths()
         openFileDialog.Destroy()
-        result = self.classifier.classify(files, orderSelectionCriterium=max, register='./saferegister.dat')[0]
+        classifier = datatools.MIDIExtractor(pathtolib = self.settings['Path to library'][1])
+        result = classifier.classify(files, orderSelectionCriterium=getattr(builtins,self.settings['Output dimension selection criterium'][1]),
+                                     register=self.settings['Register path'][1])[0]
 
         for key in result:
             self.add_line(key, result[key])
@@ -73,7 +128,7 @@ class MainGUI(wx.Frame):
         ind = event.GetIndex()
         name= self.list_ctrl.GetItem(ind, 0).GetText()
         path = self.nameToPath[name]
-        command = ['timidity', path]
+        command = [self.settings['Audio playing command'][1], path]
 
         dlg = wx.MessageDialog(self, 'Clicca per fermare', 'Playing '+name)
 
@@ -84,6 +139,11 @@ class MainGUI(wx.Frame):
         processo.kill()
 
         dlg.Destroy()
+
+    def Settings(self, _):
+        box = Settings(self.settings, self, title='Settings', style=wx.RESIZE_BORDER | wx.CLOSE_BOX)
+        box.ShowModal()
+        self.settings = box.GetSettings()
 
 
 

@@ -11,14 +11,13 @@ import builtins
 import statistics
 
 
-datasets = ['./Datasets/MIDI/'+file for file in os.listdir('./Datasets/MIDI') if '_' not in file]
+datasets = ['./Datasets/MIDI/Binary/'+file for file in os.listdir('./Datasets/MIDI/Binary') if '_' not in file]
 
 class SettingsDialog(wx.Dialog):
     def __init__(self, settings, *args, **kwargs):
         wx.Dialog.__init__(self, *args, **kwargs)
         self.settings = settings
 
-        self.SetSize(600, 250)
 
         self.panel = wx.Panel(self)
         self.button_ok, self.button_cancel = self._configureButtons()
@@ -39,6 +38,7 @@ class SettingsDialog(wx.Dialog):
         self.sizer.Add(self.button_cancel, 0, wx.EXPAND | wx.ALL, border=5)
 
         self.panel.SetSizerAndFit(self.sizer)
+        self.Fit()
         self.CentreOnScreen()
 
 
@@ -124,9 +124,9 @@ class MainGUI(wx.Frame):
 
     def add_line(self, path, inferredgenre):
         self.nameToPath[p.basename(path)]=path
-        self.list_ctrl.InsertItem(self.index, p.basename(path))
-        self.list_ctrl.SetItem(self.index, 1, str(inferredgenre[0]))
-        self.list_ctrl.SetItem(self.index, 2, str(1-inferredgenre[1]))
+        self.list_ctrl.InsertItem(self.index, p.basename(path), wx.LIST_FORMAT_CENTER)
+        self.list_ctrl.SetItem(self.index, 1, str(inferredgenre[0]), wx.LIST_FORMAT_CENTER)
+        self.list_ctrl.SetItem(self.index, 2, str(1-inferredgenre[1]), wx.LIST_FORMAT_CENTER)
         self.index += 1
 
     def askForMidis(self, _):
@@ -150,7 +150,7 @@ class MainGUI(wx.Frame):
         path = self.nameToPath[name]
         command = [self.settings['Audio playing command'][1], path]
 
-        dlg = wx.MessageDialog(self, 'Chiudi per fermare', 'Playing '+name, style=wx.ICON_EXCLAMATION)
+        dlg = wx.MessageDialog(self, 'Close this to stop', 'Playing '+name, style=wx.ICON_EXCLAMATION)
 
         processo= subprocess.Popen(command)
 
@@ -170,12 +170,15 @@ class MainGUI(wx.Frame):
         dialog = SettingsDialog({'Dataset':(datasets, datasets[0]), 'Output dimension':(['1','2','3'],1),
                              'Algorithm':(['NEAT standard', 'Mutating Training Set NEAT'], 'NEAT Standard')}, self, title='Plot Ranks',
                                 style=wx.RESIZE_BORDER|wx.CLOSE_BOX | wx.MINIMIZE_BOX)
-        dialog.ShowModal()
+        wantplot = dialog.ShowModal()
 
-        settings = dialog.GetSettings()
-        statistics.plotRank(settings['Dataset'][1], settings['Algorithm'][1],
-                            int(settings['Output dimension'][1]))
+        if wantplot == wx.ID_OK:
+            settings = dialog.GetSettings()
+            didActuallyShow = statistics.plotRank(settings['Dataset'][1], settings['Algorithm'][1],
+                                int(settings['Output dimension'][1]))
 
+            if not didActuallyShow:
+                wx.MessageBox(message='No run found for this configuration', parent=self, caption='Error occured')
 
 
 

@@ -3,18 +3,20 @@ from Utility import datatools
 import datetime
 from enums import RegistryKey
 
+####todo: Transform in a GUI/CLI accessible function and make options read from file / proper window
+
 ##General Setup
 generations = 1000                                                               # Number of generations to run
 cores = 5                                                                        # Number of parallel processes
 kind = 'feedforward'                                                             # feedforward or recurrent
-training_set = './Datasets/MP3/training.pickle'                                  # training set path
-control_set  = './Datasets/MP3/control.pickle'                                   # brand new data to test best individuals
-swapping_set = './Datasets/MP3/swap.pickle'                                      # swapping set for MTSNEAT
+training_set = './Datasets/MP3/training.dat'                                     # training set path
+control_set  = './Datasets/MP3/control.dat'                                      # brand new data to test best individuals
+swapping_set = './Datasets/MP3/swap.dat'                                         # swapping set for MTSNEAT
 
 use_MTSNEAT = False                                                              # whether to use MTS or STANDARD NEAT                                                               # If to use spatial repr
 gpuacceleration = False                                                          # Don't change just yet
 
-reuse_past_best = False                                                           # Fetch best genomes from the past
+reuse_past_best = False                                                          # Fetch best genomes from the past
 
 #todo:: pass correctly the history path to the prepare data. More likely, merge registers and change the 'compatible' function
 ##todo:: make 'compatible' check also the file type (add the filetype to the dataset meta)

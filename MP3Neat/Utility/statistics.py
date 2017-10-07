@@ -114,7 +114,7 @@ def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False):
     if ranked is None:
         ranked = rank(dataset, algorithm, order)
     if ranked[1]==0:
-        return
+        return False
 
     ##TITOLO##
     genres = ''
@@ -164,3 +164,5 @@ def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False):
         #todo: fix, like actually wtf
         ##plot.draw()
         ##datatools.register(plot.figure(), output='./graphs.dat')
+
+    return True

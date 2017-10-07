@@ -177,9 +177,6 @@ if __name__=='__main__':
 
 
 
-##todo:: create pickle files for mp3 from arffs processing genre -> genre.split('/')
-
-
 
 
 

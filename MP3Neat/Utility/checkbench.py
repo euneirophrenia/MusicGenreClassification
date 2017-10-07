@@ -11,7 +11,7 @@ import math
 
 algorithms = ['NEAT standard', 'Mutating Training Set NEAT']
 spatials = [1, 2, 3]
-datasets = ['./Datasets/MIDI/'+file for file in os.listdir('./Datasets/MIDI') if '_' not in file and os.path.isfile(file)]
+datasets = ['./Datasets/MIDI/Binary/'+file for file in os.listdir('./Datasets/MIDI/Binary') if '_' not in file and os.path.isfile(file)]
 
 
 
@@ -144,36 +144,36 @@ def partition():
         assert x not in toSwap
         if 'Soundtrack' in x['genre']:
             x['genre'] = ['Instrumental']
-        datamanager._savePickle(x, './Datasets/MP3/training.dat')
+        datamanager._savePickle(x, './Datasets/MP3/Binary/training.dat')
 
     for x in toControl:
         assert x not in toSwap
         assert x not in toTrain
         if 'Soundtrack' in x['genre']:
             x['genre'] = ['Instrumental']
-        datamanager._savePickle(x, './Datasets/MP3/control.dat')
+        datamanager._savePickle(x, './Datasets/MP3/Binary/control.dat')
     for x in toSwap:
         assert x not in toControl
         assert x not in toTrain
         if 'Soundtrack' in x['genre']:
             x['genre'] = ['Instrumental']
-        datamanager._savePickle(x, './Datasets/MP3/swap.dat')
+        datamanager._savePickle(x, './Datasets/MP3/Binary/swap.dat')
 
 
 if __name__=='__main__':
-    raw, meta = datamanager.get('./Datasets/MP3/all.dat', andGetMeta=True)
+    raw, meta = datamanager.get('./Datasets/MP3/Binary/all.dat', andGetMeta=True)
 
-    train = datamanager.get('./Datasets/MP3/train.arff')
-    control = datamanager.get('./Datasets/MP3/control.arff')
-    swap = datamanager.get('./Datasets/MP3/swap.arff')
-    compr = datamanager.get('./Datasets/MP3/compressed.pickle')
+    train = datamanager.get('./Datasets/MP3/ARFF/train.arff')
+    control = datamanager.get('./Datasets/MP3/ARFF/control.arff')
+    swap = datamanager.get('./Datasets/MP3/ARFF/swap.arff')
+    compr = datamanager.get('./Datasets/MP3/Binary/compressed.pickle')
     print(len(train), len(control), len(swap), len(compr), len(raw))
 
     #print(len([x for x in train if any(math.isnan(x[k]) for k in x if type(x[k])==float)]))
 
-    #res=datamanager.get('./Datasets/MP3/filtered.dat')
+    res=datamanager.get('./Datasets/MP3/Binary/filtered.dat')
     #processed = {x['title']: x for x in res}
-    #datamanager.save(res, './test.arff')
+    datamanager.save(res, './test.arff')
 
 
 

@@ -8,24 +8,36 @@ import subprocess
 from enums import IODirection, RegistryKey
 
 
+class IOManager:
+    _dataManagerIOFunctions = {}
 
-_dataManagerIOFunctions = {}
+    @staticmethod
+    def Handler(direction, forDatasetExtensions=[]):
+        def wrapped(func):
+            key = (tuple(sorted(forDatasetExtensions)),direction)
+            if key in IOManager._dataManagerIOFunctions:
+                raise Warning('Overriding existing ' + str(direction)+ ' function for '+ key[0])
+            IOManager._dataManagerIOFunctions[key] = func
+            return func
+        return wrapped
 
-def IOHandler(direction, forDatasetExtensions=[]):
-    def wrapped(func):
-        key = (tuple(sorted(forDatasetExtensions)),direction)
-        if key in _dataManagerIOFunctions:
-            raise Warning('Overriding existing ' + str(direction)+ ' function for '+ key[0])
-        _dataManagerIOFunctions[key] = func
-        return func
-    return wrapped
+    @staticmethod
+    def properFunctionForFile(f, direction):
+        among = [key[0] for key in IOManager._dataManagerIOFunctions if key[1] is direction]
+        ext = str(f).split('.')[-1]
+        for p in among:
+            if ext in p:
+                return IOManager._dataManagerIOFunctions[(p, direction)]
+        raise LookupError('Unsupported dataset extension: ' + ext + '. Currently supported: ' +
+                          str(set(est for key in among for est in key)))
+
 
 
 class DataManager:
     """the bread and butter of everything here, from loading up datasets to saving and preparing them for the training.
     Basically, the persistance level, built to provide some caching functionalities.
     Some features are built to precisely match my needings (as the xml parsing, which works with the ACE XML format).
-    To provide support for other tools add the proper parse/load function and mark it with @IOHandler"""
+    To provide support for other tools add the proper parse/load function and mark it with @IOManager.handler"""
     _datasets = {}
     _metas = {}
     __instance = None
@@ -35,19 +47,10 @@ class DataManager:
             DataManager.__instance = object.__new__(cls)
         return DataManager.__instance
 
-    @staticmethod
-    def __properFunctionForFile(f, direction):
-        among = [key[0] for key in _dataManagerIOFunctions if key[1] is direction]
-        ext = str(f).split('.')[-1]
-        for p in among:
-            if ext in p:
-                return _dataManagerIOFunctions[(p,direction)]
-        raise LookupError('Unsupported dataset extension: ' + ext + '. Currently supported: '+
-                          str(set(est for key in among for est in key)))
 
     def get(self, dataset, forceRefresh=False, andGetMeta=False, metaKeyFunction = lambda x:x['genre'], metaKeyKeyword = 'genres'):
         if dataset not in self._datasets or forceRefresh:
-            self._datasets[dataset] = self.__properFunctionForFile(dataset, IODirection.Load)(dataset)
+            self._datasets[dataset] = IOManager.properFunctionForFile(dataset, IODirection.Load)(dataset)
         if not andGetMeta:
             return self._datasets[dataset]
 
@@ -88,16 +91,20 @@ class DataManager:
                labels, hbest
 
     @staticmethod
-    @IOHandler(IODirection.Save, forDatasetExtensions=['dat', 'pickle'])
+    @IOManager.Handler(IODirection.Save, forDatasetExtensions=['dat', 'pickle'])
     def _savePickle(data, output='./register.dat'):
         with open(output, "ab") as f:
             pickle.dump(data, f)
 
 
     @staticmethod
-    @IOHandler(IODirection.Save, forDatasetExtensions=['arff'])
+    @IOManager.Handler(IODirection.Save, forDatasetExtensions=['arff'])
     def _saveArff(data, output):
         attrs, raw = DataManager.toArff(data)
+        if len(raw) == 0:
+            print('No data to save')
+            return
+
         converted = {
             'description':'',
             'relation':output,
@@ -109,10 +116,10 @@ class DataManager:
 
     @staticmethod
     def save(data, outputfile):
-        DataManager.__properFunctionForFile(outputfile, IODirection.Save)(data, outputfile)
+        IOManager.properFunctionForFile(outputfile, IODirection.Save)(data, outputfile)
 
     @staticmethod
-    @IOHandler(IODirection.Load, forDatasetExtensions=['dat', 'pickle'])
+    @IOManager.Handler(IODirection.Load, forDatasetExtensions=['dat', 'pickle'])
     def _loadAllfromPickle(filename):
         res=[]
         if not path.exists(filename):
@@ -127,7 +134,7 @@ class DataManager:
         return res
 
     @staticmethod
-    @IOHandler(IODirection.Load, forDatasetExtensions=['xml'])
+    @IOManager.Handler(IODirection.Load, forDatasetExtensions=['xml'])
     def _loadAllFromACEXml(filename):
         tree = etree.parse(filename)
         root = tree.getroot()
@@ -287,7 +294,7 @@ class DataManager:
         return res
 
     @staticmethod
-    @IOHandler(IODirection.Load, forDatasetExtensions=['arff'])
+    @IOManager.Handler(IODirection.Load, forDatasetExtensions=['arff'])
     def _loadAllFromArff(file):
         with open(file, 'r') as f:
             res=arff.load(f)

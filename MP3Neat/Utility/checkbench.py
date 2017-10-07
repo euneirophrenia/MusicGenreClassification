@@ -11,7 +11,7 @@ import math
 
 algorithms = ['NEAT standard', 'Mutating Training Set NEAT']
 spatials = [1, 2, 3]
-datasets = ['./Datasets/MIDI/'+file for file in os.listdir('./Datasets/MIDI') if '_' not in file]
+datasets = ['./Datasets/MIDI/'+file for file in os.listdir('./Datasets/MIDI') if '_' not in file and os.path.isfile(file)]
 
 
 
@@ -171,13 +171,13 @@ if __name__=='__main__':
 
     #print(len([x for x in train if any(math.isnan(x[k]) for k in x if type(x[k])==float)]))
 
-    res=datamanager.get('./Datasets/MP3/filtered.dat')
-    processed = {x['title']: x for x in res}
+    #res=datamanager.get('./Datasets/MP3/filtered.dat')
+    #processed = {x['title']: x for x in res}
     #datamanager.save(res, './test.arff')
 
-    plotranks()
 
-##todo:: create pickle files from arffs processing genre -> genre.split('/')
+
+##todo:: create pickle files for mp3 from arffs processing genre -> genre.split('/')
 
 
 

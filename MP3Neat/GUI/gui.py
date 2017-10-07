@@ -43,8 +43,8 @@ class SettingsDialog(wx.Dialog):
 
 
     def _configureButtons(self):
-        button_ok = wx.Button(self.panel, label="Ok", style=wx.ALIGN_CENTER_HORIZONTAL)
-        button_cancel = wx.Button(self.panel, label="Cancel", style=wx.ALIGN_CENTER_HORIZONTAL)
+        button_ok = wx.Button(self.panel, label="Ok")
+        button_cancel = wx.Button(self.panel, label="Cancel")
         button_ok.Bind(wx.EVT_BUTTON, self.onOk)
         button_cancel.Bind(wx.EVT_BUTTON, self.onCancel)
         return button_ok, button_cancel
@@ -134,16 +134,15 @@ class MainGUI(wx.Frame):
                                        "MIDI (*.midi)|*.mid",
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE)
 
-        openFileDialog.ShowModal()
-
-        files = openFileDialog.GetPaths()
-        openFileDialog.Destroy()
-        classifier = datatools.MIDIExtractor(pathtolib = self.settings['Path to library'][1])
-        result = classifier.classify(files, orderSelectionCriterium=getattr(builtins,self.settings['Output dimension selection criterium'][1]),
-                                     register=self.settings['Register path'][1])[0]
-
-        for key in result:
-            self.add_line(key, result[key])
+        res = openFileDialog.ShowModal()
+        if res == wx.ID_OK:
+            files = openFileDialog.GetPaths()
+            openFileDialog.Destroy()
+            classifier = datatools.MIDIExtractor(pathtolib = self.settings['Path to library'][1])
+            result = classifier.classify(files, orderSelectionCriterium=getattr(builtins,self.settings['Output dimension selection criterium'][1]),
+                                         register=self.settings['Register path'][1])[0]
+            for key in result:
+                self.add_line(key, result[key])
 
     def OnPlayBack(self, event):
         ind = event.GetIndex()

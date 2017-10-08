@@ -416,6 +416,7 @@ class Extractor:
 
 class MIDIExtractor(Extractor):
     managed_extensions = ['mid','midi','mei']
+
     def __init__(self, pathtolib='./Utility/JSymbolic/jSymbolic2.jar'):
         self.path = pathtolib
 

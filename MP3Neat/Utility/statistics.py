@@ -12,16 +12,16 @@ def crunch_output_node(keynode, tempvals, best, labels, weight=1, visited=[]):
     features = [(key[0], best.connections[key].weight) for key in best.connections if key[1] == keynode and key[0] < 0
                 and best.connections[key].enabled]
     othernodes = [(key[0], best.connections[key].weight) for key in best.connections if key[1] == keynode and key[0] >= 0
-                  and best.connections[key].enabled]
-
+                  and best.connections[key].enabled and key[0]!=keynode] ###one genome actually had a fucking autoloop!!!
 
     for feat in features:
         tempvals[labels[feat[0]]]+=feat[1]*weight
 
     for other in othernodes:
         if other not in visited:
-            visited.append(other)
+            visited.append(other[0])
             tempvals = crunch_output_node(other[0], tempvals, best, labels, weight=weight*other[1], visited=visited)
+
 
     return tempvals
 
@@ -36,11 +36,13 @@ def rank(dataset, algorithm, spatial):
         return {},0
 
     _, _, labels, _ = datamanager.preparedata(dataset, order=spatial)
-    allfeatuers = [labels[x] for x in labels if x < 0]
 
-    ranked = {key : {f :0.0 for f in allfeatuers} for key in data[0][RegistryKey.TRAIN_SET]['genres']}
+    allfeatures = sorted([labels[x] for x in labels if x < 0])
+
+    ranked = {genre : {f :0.0 for f in allfeatures} for genre in data[0][RegistryKey.TRAIN_SET]['genres']}
+
     if spatial==1:
-        ranked['Output'] = {f :0.0 for f in allfeatuers} ## workaround
+        ranked['Output'] = {f :0.0 for f in allfeatures} ## workaround
 
     scoresum=0.0
 
@@ -48,13 +50,16 @@ def rank(dataset, algorithm, spatial):
         best = datum[RegistryKey.BEST_GENOME]
         scoresum+= datum[RegistryKey.CONTROL_SCORE] ** 2
 
+        visited = []
         for i in range(0, datum[RegistryKey.OUTPUT_DIMENSION]):
-            crunch_output_node(i, ranked[labels[i]], best, labels)
+            visited.append(i)
+            crunch_output_node(i, ranked[labels[i]], best, labels, visited=visited)
+
 
 
         for k in ranked:
             for f in ranked[k]:
-                ranked[k][f] *= datum[RegistryKey.CONTROL_SCORE]**2
+                ranked[k][f] *= datum[RegistryKey.CONTROL_SCORE] ** 2
 
     for k in ranked:
         for f in ranked[k]:
@@ -137,8 +142,8 @@ def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False, kind=p
     #DATA
     usedfeats = {j: f for genre in ranked[0] for j, f in enumerate(sorted(ranked[0][genre])) if ranked[0][genre][f] != 0}
 
-    xs = {genre : [j for j,f in enumerate(sorted(ranked[0][genre])) if ranked[0][genre][f]!=0] for genre in ranked[0]}
-    ys = {genre: [ranked[0][genre][f] for f in ranked[0][genre] if f in usedfeats.values()] for genre in ranked[0]}
+    #xs = {genre : [j for j,f in enumerate(sorted(ranked[0][genre])) if ranked[0][genre][f]!=0] for genre in ranked[0]}
+    ys = {genre: [ranked[0][genre][f] for f in sorted(ranked[0][genre]) if f in usedfeats.values()] for genre in ranked[0]}
 
     #Compressione e normalizzazione degli intervalli
     newf = {}

@@ -9,9 +9,10 @@ import os
 import pandas
 import math
 
+
 algorithms = ['NEAT standard', 'Mutating Training Set NEAT']
 spatials = [1, 2, 3]
-datasets = ['./Datasets/MIDI/Binary/'+file for file in os.listdir('./Datasets/MIDI/Binary') if '_' not in file and os.path.isfile(file)]
+datasets = ['./Datasets/MIDI/Binary/'+file for file in os.listdir('./Datasets/MIDI/Binary') if '_' not in file]
 
 
 
@@ -161,18 +162,25 @@ def partition():
 
 
 if __name__=='__main__':
-    raw, meta = datamanager.get('./Datasets/MP3/Binary/all.dat', andGetMeta=True)
+    #raw, meta = datamanager.get('./Datasets/MP3/Binary/all.dat', andGetMeta=True)
 
-    train = datamanager.get('./Datasets/MP3/ARFF/train.arff')
-    control = datamanager.get('./Datasets/MP3/ARFF/control.arff')
-    swap = datamanager.get('./Datasets/MP3/ARFF/swap.arff')
-    compr = datamanager.get('./Datasets/MP3/Binary/compressed.pickle')
-    print(len(train), len(control), len(swap), len(compr), len(raw))
+    #train = datamanager.get('./Datasets/MP3/ARFF/train.arff')
+    #control = datamanager.get('./Datasets/MP3/ARFF/control.arff')
+    #swap = datamanager.get('./Datasets/MP3/ARFF/swap.arff')
+    #compr = datamanager.get('./Datasets/MP3/Binary/compressed.pickle')
+    #print(len(train), len(control), len(swap), len(compr), len(raw))
 
     #print(len([x for x in train if any(math.isnan(x[k]) for k in x if type(x[k])==float)]))
 
     #res=datamanager.get('./Datasets/MP3/Binary/filtered.dat')
     #processed = {x['title']: x for x in res}
+
+    #midi = datamanager.get('./saferegister.dat')
+
+
+
+    plotranks()
+
 
 
 

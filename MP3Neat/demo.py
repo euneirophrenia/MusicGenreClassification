@@ -1,30 +1,61 @@
-import datatools
+import sys
+
+sys.path.append('./Utility')
+sys.path.append('./NEAT')
+
+import argparse
 from enums import RegistryKey
+import pandas
 
-files=['./MIDI/Jazz/route_66_gw.mid', './MIDI/ClassicMusic/furelis.mid',
-                                              './MIDI/Rock/1323.mid']
-register = './register.dat'
+from GUI.gui import *
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-r','--register',default='./saferegister.dat')
+parser.add_argument('-f', '--folder', type=str)
+parser.add_argument('-d','--dimension', type=str, choices=['min','max'], default='max')
 
 
+def ShowGui():
+    try:
+        _app = wx.App(False)
+        _frame = MainGUI()
+        _frame.Show()
+        _app.MainLoop()
+    except Exception:
+        pass
 
-def classifyMidi(*toClassify, reg = register):
+
+def classifyMidi(toClassify, reg, orderSelectionCriterium=max):
     res = datatools.MIDIExtractor().classify(toClassify,
-                                             orderSelectionCriterium=min,
+                                             orderSelectionCriterium=orderSelectionCriterium,
                                              runEvaluationCriterium=lambda h: 1 - (
                                              h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size']),
                                              register=reg)
 
-    outputmessage = "-------- Classification results ----- \n\n"
+    print( "-------- Classification results ----- \n\n")
 
-    for key in res[0]:
-        outputmessage+= str(key) + '\t' + str(res[0][key][0]) + ' (' + str(1-res[0][key][1]) + ')\n'
+    rows = [(str(os.path.basename(key)), str(res[0][key][0]), str(1-res[0][key][1])) for key in res[0]]
 
-    print('\n\n\n'+outputmessage)
+    """for key in res[0]:
+        outputmessage+= str(key) + '\t' + str(res[0][key][0]) + ' (' + str(1-res[0][key][1]) + ')\n'"""
 
-    return res[0], outputmessage
+    overkill = pandas.DataFrame(rows, columns=['Title', 'Inferred genre', 'confidence'])
+
+    print('\n\n\n')
+    print(overkill)
+    print('\n\n\n\n')
+
+    return res[0], str(overkill)
 
 
-#classifyMidi(files[0],files[1])
 
 
+args = parser.parse_args()
 
+if args.folder is None:
+    ShowGui()
+
+else:
+    files = [args.folder + f for f in os.listdir(args.folder)]
+    classifyMidi(files, reg=args.register, orderSelectionCriterium=getattr(builtins,args.dimension))

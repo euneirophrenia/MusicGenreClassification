@@ -8,7 +8,7 @@ import matplotlib
 matplotlib.use('WXAgg')
 
 import builtins
-import statistics
+from Utility import statistics as statistics
 
 
 datasets = ['./Datasets/MIDI/Binary/'+file for file in os.listdir('./Datasets/MIDI/Binary') if '_' not in file]
@@ -23,17 +23,17 @@ class SettingsDialog(wx.Dialog):
         self.button_ok, self.button_cancel = self._configureButtons()
 
         self.comboboxes = []
-        self.sizer = wx.GridSizer(cols = 2, rows = len(settings)+1, hgap=5, vgap=3)
+        self.sizer = wx.GridSizer(cols = 2, rows = len(self.settings)+1, hgap=5, vgap=3)
 
-        for i, key in sorted(enumerate(settings)):
-            if all(type(x)==bool for x in settings[key][0]):
+        for i, key in enumerate(sorted(self.settings)):
+            if all(type(x)==bool for x in self.settings[key][0]):
                 combobox = wx.CheckBox(self.panel, id=wx.ID_ANY)
-                combobox.SetValue(bool(settings[key][1]))
+                combobox.SetValue(bool(self.settings[key][1]))
             else:
-                combobox = wx.ComboBox(self.panel, id=wx.ID_ANY, value=str(settings[key][1]), choices = settings[key][0],
+                combobox = wx.ComboBox(self.panel, id=wx.ID_ANY, value=str(self.settings[key][1]), choices = self.settings[key][0],
                                    style = wx.CB_READONLY, name=key)
 
-            combobox.Enable(settings[key][2] if len(settings[key])>2 else True)
+            combobox.Enable(self.settings[key][2] if len(self.settings[key])>2 else True)
             self.comboboxes.append(combobox)
 
             self.sizer.Add(wx.StaticText(self, id=wx.ID_ANY, label=key, style=wx.ALIGN_LEFT), 0, wx.EXPAND| wx.ALL, border=5)
@@ -60,7 +60,7 @@ class SettingsDialog(wx.Dialog):
         self.EndModal(wx.ID_CANCEL)
 
     def onOk(self, _):
-        for i, key in enumerate(self.settings):
+        for i, key in enumerate(sorted(self.settings)):
             self.settings[key] = (self.settings[key][0],self.comboboxes[i].GetValue())
         self.EndModal(wx.ID_OK)
 
@@ -182,19 +182,20 @@ class MainGUI(wx.Frame):
         if wantplot == wx.ID_OK:
             settings = dialog.GetSettings()
             didActuallyShow = statistics.plotRank(settings['Dataset'][1], settings['Algorithm'][1],
-                                int(settings['Output dimension'][1]))
+                                                  int(settings['Output dimension'][1]))
 
             if not didActuallyShow:
                 wx.MessageBox(message='No run found for this configuration', parent=self, caption='Error occured')
 
 
 
-try:
-    app = wx.App(False)
-    frame = MainGUI()
-    frame.Show()
-    app.MainLoop()
-except Exception:
-    pass
+if __name__ == '__main__':
+    try:
+        app = wx.App(False)
+        frame = MainGUI()
+        frame.Show()
+        app.MainLoop()
+    except Exception:
+        pass
 
 

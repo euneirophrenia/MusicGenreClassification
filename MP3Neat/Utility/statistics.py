@@ -110,7 +110,7 @@ def showrank(dataset, algorithm, order):
                 print(key, ':', res[0][genre][key])
 
 
-def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False):
+def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False, kind=plot.plot):
     if ranked is None:
         ranked = rank(dataset, algorithm, order)
     if ranked[1]==0:
@@ -147,7 +147,8 @@ def plotRank(dataset, algorithm, order, ranked=None, andSaveThem = False):
 
     for genre in ranked[0]:
         newxs = sorted(newf.values())
-        plot.plot(newxs, ys[genre], color=colors[genre])
+        kind(newxs, ys[genre], color=colors[genre])
+
 
     plot.xticks(range(0, len(newf)), [usedfeats[j] for j in newf] , rotation=90, size=7)
 

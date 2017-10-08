@@ -26,8 +26,14 @@ class SettingsDialog(wx.Dialog):
         self.sizer = wx.GridSizer(cols = 2, rows = len(settings)+1, hgap=5, vgap=3)
 
         for i, key in sorted(enumerate(settings)):
-            combobox = wx.ComboBox(self.panel, id=wx.ID_ANY, value=str(settings[key][1]), choices = settings[key][0],
+            if all(type(x)==bool for x in settings[key][0]):
+                combobox = wx.CheckBox(self.panel, id=wx.ID_ANY)
+                combobox.SetValue(bool(settings[key][1]))
+            else:
+                combobox = wx.ComboBox(self.panel, id=wx.ID_ANY, value=str(settings[key][1]), choices = settings[key][0],
                                    style = wx.CB_READONLY, name=key)
+
+            combobox.Enable(settings[key][2] if len(settings[key])>2 else True)
             self.comboboxes.append(combobox)
 
             self.sizer.Add(wx.StaticText(self, id=wx.ID_ANY, label=key, style=wx.ALIGN_LEFT), 0, wx.EXPAND| wx.ALL, border=5)
@@ -72,10 +78,10 @@ class MainGUI(wx.Frame):
         wx.Frame.__init__(self, None, wx.ID_ANY, "MIDI Genre Classification")
 
 
-        self.settings = {'Output dimension selection criterium':(['min','max'], 'min') , 'File type':(['MIDI'],'MIDI'),
-                         'Path to library' : (['./Utility/JSymbolic/jSymbolic2.jar'],'./Utility/JSymbolic/jSymbolic2.jar'),
-                         'Register path' :(['./saferegister.dat'],'./saferegister.dat'),
-                         'Audio playing command' : (['timidity'],'timidity')}
+        self.settings = {'Output dimension selection criterium':(['min','max'], 'min') , 'File type':(['MIDI'],'MIDI', False),
+                         'Path to library' : (['./Utility/JSymbolic/jSymbolic2.jar'],'./Utility/JSymbolic/jSymbolic2.jar',False),
+                         'Register path' :(['./saferegister.dat'],'./saferegister.dat',False),
+                         'Audio playing command' : (['timidity'],'timidity',False)}
 
         panel = wx.Panel(self, wx.ID_ANY)
         self.index = 0
@@ -168,7 +174,8 @@ class MainGUI(wx.Frame):
 
     def Plots(self, _):
         dialog = SettingsDialog({'Dataset':(datasets, datasets[0]), 'Output dimension':(['1','2','3'],1),
-                             'Algorithm':(['NEAT standard', 'Mutating Training Set NEAT'], 'NEAT Standard')}, self, title='Plot Ranks',
+                             'Algorithm':(['NEAT standard', 'Mutating Training Set NEAT'], 'NEAT Standard'),
+                                 'Use histograms':([False],False, False)}, self, title='Plot Ranks',
                                 style=wx.RESIZE_BORDER|wx.CLOSE_BOX | wx.MINIMIZE_BOX)
         wantplot = dialog.ShowModal()
 

@@ -171,9 +171,8 @@ if __name__=='__main__':
 
     #print(len([x for x in train if any(math.isnan(x[k]) for k in x if type(x[k])==float)]))
 
-    res=datamanager.get('./Datasets/MP3/Binary/filtered.dat')
+    #res=datamanager.get('./Datasets/MP3/Binary/filtered.dat')
     #processed = {x['title']: x for x in res}
-    datamanager.save(res, './test.arff')
 
 
 

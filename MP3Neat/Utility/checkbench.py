@@ -193,20 +193,12 @@ if __name__=='__main__':
     #res=datamanager.get('./Datasets/MP3/Binary/filtered.dat')
     #processed = {x['title']: x for x in res}
 
-    nets = {tuple(h[RegistryKey.TRAIN_SET]['genres']) : (h[RegistryKey.BEST_NET],h[RegistryKey.CONTROL_SCORE]) for h in history if h[RegistryKey.OUTPUT_DIMENSION]==1
-            and h[RegistryKey.ALGORITHM] == algorithms[1] and len(h[RegistryKey.TRAIN_SET]['genres'])==2}
 
-    print(nets)
+    res=datatools.MIDIMiner().ensambleClassify(files=['./MIDI/SicuramenteBraniACaso/'+ f for f in os.listdir('./MIDI/SicuramenteBraniACaso')],
+                                                register='./saferegister.dat')
 
-    data = datamanager.get('./Datasets/MIDI/Binary/classic-jazz-rock_test.dat')
-
-    for d in data:
-        print(ensambleclassify(d, nets), d['genre'])
-
-    res = [(ensambleclassify(d, nets),d['genre']) for d in data]
-
-    print(1-(len([x for x in res if x[0]!=x[1][0]])/len(res)))
-
+    for x in res:
+        print(x, res[x][0],'(',res[x][1],')')
 
     #plotranks()
 

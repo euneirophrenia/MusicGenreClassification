@@ -409,7 +409,7 @@ class Miner:
 
         return res, genres, bestorder, controlscore
 
-    def ensambleClassify(self, files, register = './register.dat'):
+    def ensambleClassify(self, files, register = './register.dat', runEvaluationCriterium=lambda h : 1 - (h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size'])):
         """
         Classify files of arbitrary genres by combining binary classifiers!
         This is inspired by the 1v1 (OVO) datamining technique.
@@ -419,7 +419,8 @@ class Miner:
         Just provide the register with the proper binary runs and you're good.
         :param files: the list of paths of file to classify
         :param register: where to fetch the nets
-        :return: a dictionary {basename(file) : inferred_genre }
+        :param runEvaluationCriterium: a function to determine whiche binary net to use for each couple of genre (default best control score)
+        :return: a dictionary semantically equivalent to {basename(file) : (inferred_genre for file, confidence) in <files> }
         """
 
         genres = {}
@@ -428,12 +429,22 @@ class Miner:
         actual = [x for x in files if str(x).split('.')[-1] in self.managed_extensions]
         data = [collections.OrderedDict(sorted(x.items())) for x in self.extractFromList(actual)]
 
-        nets={tuple(h[RegistryKey.TRAIN_SET]['genres']) : (h[RegistryKey.BEST_NET],h[RegistryKey.CONTROL_SCORE])
-              for h in DataManager().get(register)
-              if h[RegistryKey.OUTPUT_DIMENSION]==1 and h[RegistryKey.ALGORITHM] == 'Mutating Training Set NEAT'
-              and len(h[RegistryKey.TRAIN_SET]['genres'])==2}
-        ##the only arbitrary choice is the algorithm here, dimension 1 and len(genres)==2 are required by design
-        ## algorithm == MTS was chosen since it produces the best results, due to the increase in quality of single nets
+        binaries = [(h[RegistryKey.BEST_NET], runEvaluationCriterium(h), h[RegistryKey.TRAIN_SET]['genres'])
+                    for h in DataManager().get(register)
+                      if h[RegistryKey.OUTPUT_DIMENSION]==1 and h[RegistryKey.ALGORITHM] == 'Mutating Training Set NEAT'
+                      and len(h[RegistryKey.TRAIN_SET]['genres'])==2
+                    ]
+
+        grouped_binaries = {}
+        for b in binaries:
+            groupkey = tuple(sorted(b[2]))
+            if groupkey in grouped_binaries:
+                grouped_binaries[groupkey].append((b[0],b[1]))
+            else:
+                grouped_binaries[groupkey]=[(b[0],b[1])]
+
+        nets={key  : max(grouped_binaries[key], key=lambda x : x[1]) for key in grouped_binaries}
+
 
         for datum in data:
             for g in nets:

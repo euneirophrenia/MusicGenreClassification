@@ -1,14 +1,7 @@
-MP3NEAT/MP3/
-MP3NEAT/MIDI/
 MP3NEAT/Stuff/
-NEATTest/Errori/
-NEATTest/midi/
-NEATTest/MP3/
+
 NEATTest/**/*.dat
 MP3NEAT/Datasets/**/*.dat
-*.pickle
-
-MP3Neat/.idea/
 
 MP3Neat/register_mp3.dat
 MP3Neat/extended_register.dat
@@ -18,3 +11,12 @@ MP3Neat/extended_register.dat
 **/*.pptx
 **/*.ppt
 **/*.pdf
+**/.idea/
+
+**/.DS_Store
+
+*.mid
+*.midi
+*.mp3
+*.wav
+*.pickle

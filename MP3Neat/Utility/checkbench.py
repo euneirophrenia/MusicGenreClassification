@@ -194,7 +194,7 @@ if __name__=='__main__':
     #processed = {x['title']: x for x in res}
 
 
-    res=datatools.MIDIMiner().ensambleClassify(files=['./MIDI/SicuramenteBraniACaso/'+ f for f in os.listdir('./MIDI/SicuramenteBraniACaso')],
+    res=datatools.MIDIMiner().ensambleClassify(files=['./Testing/'+ f for f in os.listdir('./Testing')],
                                                 register='./saferegister.dat')
 
     for x in res:

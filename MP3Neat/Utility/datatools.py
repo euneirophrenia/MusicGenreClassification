@@ -422,8 +422,6 @@ class Miner:
         :param runEvaluationCriterium: a function to determine whiche binary net to use for each couple of genre (default best control score)
         :return: a dictionary semantically equivalent to {basename(file) : (inferred_genre for file, confidence) in <files> }
         """
-
-        genres = {}
         output = {}
 
         actual = [x for x in files if str(x).split('.')[-1] in self.managed_extensions]
@@ -445,8 +443,8 @@ class Miner:
 
         nets={key  : max(grouped_binaries[key], key=lambda x : x[1]) for key in grouped_binaries}
 
-
         for datum in data:
+            genres = {}
             for g in nets:
                 inverseMap = Utility.inverseMapping(g, 1)
                 mapkeys = list(inverseMap.keys())

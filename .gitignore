@@ -12,3 +12,9 @@ MP3Neat/.idea/
 
 MP3Neat/register_mp3.dat
 MP3Neat/extended_register.dat
+
+**/*.docx
+**/*.doc
+**/*.pptx
+**/*.ppt
+**/*.pdf

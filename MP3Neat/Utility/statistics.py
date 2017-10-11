@@ -2,6 +2,7 @@ import datatools
 import matplotlib.pyplot as plot
 import matplotlib.patches as patches
 from enums import RegistryKey
+#import numpy
 
 datamanager = datatools.DataManager()
 history = datamanager.get('./register.dat')
@@ -37,7 +38,11 @@ def rank(dataset, algorithm, spatial):
 
     _, _, labels, _ = datamanager.preparedata(dataset, order=spatial)
 
+
     allfeatures = sorted([labels[x] for x in labels if x < 0])
+
+    #ins = datamanager.get(dataset)
+    #meanvalues= {f: numpy.array([x[f] for x in ins]).mean() for f in allfeatures}
 
     ranked = {genre : {f :0.0 for f in allfeatures} for genre in data[0][RegistryKey.TRAIN_SET]['genres']}
 
@@ -76,16 +81,17 @@ def rank(dataset, algorithm, spatial):
 
     ranked.pop('Output',None)
 
-    maximum = max([x for genre in ranked for x in ranked[genre].values()])
-    minimum = min([x for genre in ranked for x in ranked[genre].values()])
+    values = [x for genre in ranked for x in ranked[genre].values()]
+    maximum = max(values)
+    minimum = min(values)
     for genre in ranked:
         for f in ranked[genre]:
-                ranked[genre][f] = (ranked[genre][f])/(maximum - minimum)
+                ranked[genre][f] = 2*(ranked[genre][f])/(maximum - minimum)
 
     return ranked, len(data)
 
 def bestPerformer(dataset):
-    m = datatools.metadata(dataset)
+    m = datamanager.metadata(dataset)
     data = [x for x in history if datatools.DataManager.compatible(x[RegistryKey.TRAIN_SET], m)]
     best = (1,None)
     for d in data:

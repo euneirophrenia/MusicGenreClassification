@@ -144,7 +144,7 @@ class MainGUI(wx.Frame):
         if res == wx.ID_OK:
             files = openFileDialog.GetPaths()
             openFileDialog.Destroy()
-            classifier = datatools.MIDIExtractor(pathtolib = self.settings['Path to library'][1])
+            classifier = datatools.MIDIMiner(pathtolib = self.settings['Path to library'][1])
             result = classifier.classify(files, orderSelectionCriterium=getattr(builtins,self.settings['Output dimension selection criterium'][1]),
                                          register=self.settings['Register path'][1])[0]
             for key in result:

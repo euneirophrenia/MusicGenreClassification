@@ -60,11 +60,11 @@ def plotranks():
 
 def testClassify(files=['./MIDI/Jazz/route_66_gw.mid', './MIDI/ClassicMusic/furelis.mid',
                                               './MIDI/Rock/1323.mid'], register='./register.dat'):
-    res = datatools.MIDIExtractor().classify(files,
-                                             orderSelectionCriterium=max,
-                                             runEvaluationCriterium=lambda h: 1 - (
+    res = datatools.MIDIMiner().classify(files,
+                                         orderSelectionCriterium=max,
+                                         runEvaluationCriterium=lambda h: 1 - (
                                              h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size']),
-                                             register=register)
+                                         register=register)
     print(res)
     return res
 
@@ -161,6 +161,24 @@ def partition():
         datamanager._savePickle(x, './Datasets/MP3/Binary/swap.dat')
 
 
+def ensambleclassify(datum, nets):
+    genres = {}
+    for  g in nets:
+        inverseMap = datatools.Utility.inverseMapping(g, 1)
+        mapkeys = list(inverseMap.keys())
+        net_input = [datum[key] for key in sorted(list(datum.keys())) if type(datum[key]) == float]
+        key = inverseMap[datatools.Utility.closestVector(nets[g][0].activate(net_input), mapkeys)[0]]
+        if key in genres:
+            genres[key]+=nets[g][1]
+        else:
+            genres[key]=nets[g][1]
+
+    return max(genres, key=lambda x:genres[x])
+
+
+
+
+
 if __name__=='__main__':
     #raw, meta = datamanager.get('./Datasets/MP3/Binary/all.dat', andGetMeta=True)
 
@@ -175,11 +193,22 @@ if __name__=='__main__':
     #res=datamanager.get('./Datasets/MP3/Binary/filtered.dat')
     #processed = {x['title']: x for x in res}
 
-    #midi = datamanager.get('./saferegister.dat')
+    nets = {tuple(h[RegistryKey.TRAIN_SET]['genres']) : (h[RegistryKey.BEST_NET],h[RegistryKey.CONTROL_SCORE]) for h in history if h[RegistryKey.OUTPUT_DIMENSION]==1
+            and h[RegistryKey.ALGORITHM] == algorithms[1] and len(h[RegistryKey.TRAIN_SET]['genres'])==2}
+
+    print(nets)
+
+    data = datamanager.get('./Datasets/MIDI/Binary/classic-jazz-rock_test.dat')
+
+    for d in data:
+        print(ensambleclassify(d, nets), d['genre'])
+
+    res = [(ensambleclassify(d, nets),d['genre']) for d in data]
+
+    print(1-(len([x for x in res if x[0]!=x[1][0]])/len(res)))
 
 
-
-    plotranks()
+    #plotranks()
 
 
 

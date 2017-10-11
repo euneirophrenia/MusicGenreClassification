@@ -27,11 +27,11 @@ def ShowGui():
 
 
 def classifyMidi(toClassify, reg, orderSelectionCriterium=max):
-    res = datatools.MIDIExtractor().classify(toClassify,
-                                             orderSelectionCriterium=orderSelectionCriterium,
-                                             runEvaluationCriterium=lambda h: 1 - (
+    res = datatools.MIDIMiner().classify(toClassify,
+                                         orderSelectionCriterium=orderSelectionCriterium,
+                                         runEvaluationCriterium=lambda h: 1 - (
                                              h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size']),
-                                             register=reg)
+                                         register=reg)
 
     print( "-------- Classification results ----- \n\n")
 

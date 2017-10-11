@@ -351,11 +351,13 @@ class ErrorFetcher:
 
 ##TODO:: Right now it works under the assumption that the extractor is a jar file
 ##todo:: generalize to make them accept a custom command to run, maybe defaulting to a jar launch or something
-class Extractor:
-    """Base class for automatic feature extraction and dataset creation.
+class Miner:
+    """
+    Base class for automatic feature extraction and dataset creation.
     While this is abstract, you can add several subclasses to provide support for different file formats.
     Right now, jSymbolic and jAudio are used to extract from MIDI and WaveForm formats.
-    TODO: Rework to not necessarly depend on external resources, mostly removing the "path" dependency."""
+    TODO: Rework to not necessarly depend on external resources, mostly removing the "path" dependency.
+    """
 
     def __init__(self):
         raise NotImplementedError('this is supposed to be an abstract class man')
@@ -407,6 +409,49 @@ class Extractor:
 
         return res, genres, bestorder, controlscore
 
+    def ensambleClassify(self, files, register = './register.dat'):
+        """
+        Classify files of arbitrary genres by combining binary classifiers!
+        This is inspired by the 1v1 (OVO) datamining technique.
+        We fetch all the binary classifier trained to recognize only 2 genres and combine their output by a voting scheme.
+        The genre with most votes wins! Provides far better results than the nets specifically trained to recognize N genres.
+        Also, this does not require any specification to handle different genres or different file types!
+        Just provide the register with the proper binary runs and you're good.
+        :param files: the list of paths of file to classify
+        :param register: where to fetch the nets
+        :return: a dictionary {basename(file) : inferred_genre }
+        """
+
+        genres = {}
+        output = {}
+
+        actual = [x for x in files if str(x).split('.')[-1] in self.managed_extensions]
+        data = [collections.OrderedDict(sorted(x.items())) for x in self.extractFromList(actual)]
+
+        nets={tuple(h[RegistryKey.TRAIN_SET]['genres']) : (h[RegistryKey.BEST_NET],h[RegistryKey.CONTROL_SCORE])
+              for h in DataManager().get(register)
+              if h[RegistryKey.OUTPUT_DIMENSION]==1 and h[RegistryKey.ALGORITHM] == 'Mutating Training Set NEAT'
+              and len(h[RegistryKey.TRAIN_SET]['genres'])==2}
+        ##the only arbitrary choice is the algorithm here, dimension 1 and len(genres)==2 are required by design
+        ## algorithm == MTS was chosen since it produces the best results, due to the increase in quality of single nets
+
+        for datum in data:
+            for g in nets:
+                inverseMap = Utility.inverseMapping(g, 1)
+                mapkeys = list(inverseMap.keys())
+                net_input = [datum[key] for key in sorted(list(datum.keys())) if type(datum[key]) == float]
+                key = inverseMap[Utility.closestVector(nets[g][0].activate(net_input), mapkeys)[0]]
+                if key in genres:
+                    genres[key] += nets[g][1]
+                else:
+                    genres[key] = nets[g][1]
+
+            res = max(genres, key=lambda x: genres[x])
+
+            output[datum['title']]= (res, genres[res]/len(nets))
+
+        return output
+
     def mergeFolderOfGenreIntoPickle(self,folder, picklefile, genre):
         standardname = path.basename(folder) + '.xml'
         outputfile = self.extractFromFolder(folder, outputfile=standardname,
@@ -414,7 +459,7 @@ class Extractor:
         DataManager.mergeXmlOfGenreIntoPickle(outputfile, picklefile=os.path.abspath(picklefile), genre=genre)
         self.__clean(outputfile, folder)
 
-class MIDIExtractor(Extractor):
+class MIDIMiner(Miner):
     managed_extensions = ['mid','midi','mei']
 
     def __init__(self, pathtolib='./Utility/JSymbolic/jSymbolic2.jar'):
@@ -444,7 +489,7 @@ class MIDIExtractor(Extractor):
             print('Problems cleaning up.' + str(e))
 
 
-class WaveFormExtractor(Extractor):
+class WaveFormMiner(Miner):
     managed_extensions = ['mp3','wav','ogg', 'wave','aif','aiff','aifc','au','snd','oga']
     def __init__(self, pathtoworkingdir = './Utility/JAudio/', pathtolib='./jAudio.jar'):
         self.path = pathtolib
@@ -484,9 +529,9 @@ class WaveFormExtractor(Extractor):
                  runEvaluationCriterium = lambda h : 1 - (h[RegistryKey('control errors')] / h[RegistryKey('control set')]['size']),
                  register = './register.dat', threshold=0.2):
 
-        data, bestnet, bestorder, genres, controlscore = Extractor._prepareFiles(self, files, orderSelectionCriterium,
-                                                                                 amongGenres,
-                                                                                 runEvaluationCriterium, register)
+        data, bestnet, bestorder, genres, controlscore = Miner._prepareFiles(self, files, orderSelectionCriterium,
+                                                                             amongGenres,
+                                                                             runEvaluationCriterium, register)
 
         res = {}
 
